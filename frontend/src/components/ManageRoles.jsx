@@ -1,0 +1,120 @@
+import { useEffect, useMemo, useState } from 'react';
+import { ShieldCheck, UserMinus } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { adminApi, departmentApi } from '../services/api';
+
+const ROLE_OPTIONS = [
+  { value: 'college_dean', label: 'College Dean' },
+  { value: 'dept_head', label: 'Department Head' },
+  { value: 'academic_directorate', label: 'Academic Directorate' },
+];
+
+const ManageRoles = ({ onRoleAssigned }) => {
+  const [candidates, setCandidates] = useState([]);
+  const [colleges, setColleges] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [role, setRole] = useState('');
+  const [collegeId, setCollegeId] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
+  const [userId, setUserId] = useState('');
+  const [occupant, setOccupant] = useState(null);
+  const [removing, setRemoving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([adminApi.getRoleCandidates(), adminApi.getColleges(), departmentApi.getAll()])
+      .then(([staff, collegeRows, departmentRows]) => {
+        if (!active) return;
+        setCandidates((Array.isArray(staff) ? staff : []).filter((user) => String(user.role).toLowerCase() !== 'student'));
+        setColleges(Array.isArray(collegeRows) ? collegeRows : []);
+        setDepartments(Array.isArray(departmentRows) ? departmentRows : []);
+      })
+      .catch((error) => toast.error(error.message || 'Unable to load role assignment data.'))
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!role || (role === 'college_dean' && !collegeId) || (role === 'dept_head' && !departmentId)) {
+      setOccupant(null);
+      return undefined;
+    }
+    let active = true;
+    adminApi.getManagementRoleOccupant({ role, college_id: role === 'college_dean' ? collegeId : undefined, department_id: role === 'dept_head' ? departmentId : undefined })
+      .then((current) => { if (active) { setOccupant(current); setUserId(''); } })
+      .catch((error) => toast.error(error.message || 'Unable to check the current occupant.'));
+    return () => { active = false; };
+  }, [collegeId, departmentId, role]);
+
+  const filteredCandidates = useMemo(() => {
+    if (role === 'college_dean') return candidates.filter((user) => ['instructor', 'dept_head'].includes(String(user.role).toLowerCase()) && String(user.college_id) === String(collegeId));
+    if (role === 'dept_head') return candidates.filter((user) => String(user.role).toLowerCase() === 'instructor' && String(user.department_id) === String(departmentId));
+    return candidates.filter((user) => ['instructor', 'dept_head', 'college_dean'].includes(String(user.role).toLowerCase()));
+  }, [candidates, collegeId, departmentId, role]);
+
+  const resetScope = (nextRole) => {
+    setRole(nextRole);
+    setCollegeId('');
+    setDepartmentId('');
+    setUserId('');
+  };
+
+  const assignRole = async (event) => {
+    event.preventDefault();
+    if (!role || !userId) return toast.error('Select a role and eligible instructor.');
+    if (role === 'college_dean' && !collegeId) return toast.error('Select a college before choosing an instructor.');
+    if (role === 'dept_head' && !departmentId) return toast.error('Select a department before choosing an instructor.');
+    if (occupant) return toast.error('Remove the current occupant before assigning this role.');
+    if (!filteredCandidates.some((user) => String(user.id) === String(userId))) return toast.error('The selected instructor is not eligible for this scope.');
+    setSaving(true);
+    try {
+      await adminApi.assignManagementRole(userId, role, {
+        college_id: role === 'college_dean' ? Number(collegeId) : null,
+        department_id: role === 'dept_head' ? Number(departmentId) : null,
+      });
+      toast.success('Role assigned successfully.');
+      onRoleAssigned?.(Number(userId), role);
+      setUserId('');
+    } catch (error) {
+      toast.error(error.message || 'Unable to assign role.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeOccupant = async () => {
+    if (!occupant) return;
+    setRemoving(true);
+    try {
+      await adminApi.resetManagementRole(occupant.id);
+      setOccupant(null);
+      setCandidates((current) => current.map((user) => (user.id === occupant.id ? { ...user, role: 'instructor' } : user)));
+      toast.success('Current role occupant removed.');
+    } catch (error) {
+      toast.error(error.message || 'Unable to remove the current occupant.');
+    } finally {
+      setRemoving(false);
+    }
+  };
+
+  return (
+    <section className="space-y-6" aria-labelledby="manage-roles-title">
+      <div><h2 id="manage-roles-title" className="text-2xl font-bold text-slate-900">Manage Roles</h2><p className="mt-1 text-slate-600">Assign institutional roles to academic staff only.</p></div>
+      {occupant && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950"><span>Current {role === 'college_dean' ? 'College Dean' : role === 'dept_head' ? 'Department Head' : 'Academic Directorate'}: <strong>{occupant.full_name}</strong></span><button type="button" onClick={removeOccupant} disabled={removing} className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-900 disabled:opacity-50"><UserMinus size={16} />{removing ? 'Removing...' : `Remove Current ${role === 'college_dean' ? 'College Dean' : role === 'dept_head' ? 'Department Head' : 'Academic Directorate'}`}</button></div>}
+      <form onSubmit={assignRole} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <label className="text-sm font-medium text-slate-700">Role<select value={role} onChange={(event) => resetScope(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-3" required><option value="">Select role</option>{ROLE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+          {role === 'college_dean' && <label className="text-sm font-medium text-slate-700">Target College<select value={collegeId} onChange={(event) => { setCollegeId(event.target.value); setUserId(''); }} className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-3" required><option value="">Select college</option>{colleges.map((college) => <option key={college.id} value={college.id}>{college.name}</option>)}</select></label>}
+          {role === 'dept_head' && <label className="text-sm font-medium text-slate-700">Target Department<select value={departmentId} onChange={(event) => { setDepartmentId(event.target.value); setUserId(''); }} className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-3" required><option value="">Select department</option>{departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}</select></label>}
+          <label className="text-sm font-medium text-slate-700">Candidate<select value={userId} onChange={(event) => setUserId(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-3" disabled={loading || Boolean(occupant) || (role !== 'academic_directorate' && !(collegeId || departmentId))} required><option value="">{loading ? 'Loading candidates...' : 'Select candidate'}</option>{filteredCandidates.map((user) => <option key={user.id} value={user.id}>{user.full_name}{user.department_name ? ` - ${user.department_name}` : ''}</option>)}</select></label>
+        </div>
+        <button type="submit" disabled={loading || saving || Boolean(occupant)} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white disabled:bg-slate-300"><ShieldCheck size={17} />{saving ? 'Assigning...' : 'Assign Role'}</button>
+      </form>
+      {!loading && !candidates.length && <p className="rounded-xl bg-slate-50 p-4 text-slate-600">No eligible academic staff found.</p>}
+    </section>
+  );
+};
+
+export default ManageRoles;

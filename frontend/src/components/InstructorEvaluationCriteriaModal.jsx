@@ -1,0 +1,213 @@
+import React from 'react';
+import { criteriaApi } from '../services/api';
+import LanguageToggle from './LanguageToggle';
+import { getQuestionText, groupCriteriaByCategory } from '../utils/evaluationCriteria';
+
+// Simple 1-5 rating scale
+const RATING_SCALE = [1, 2, 3, 4, 5];
+
+export default function InstructorEvaluationCriteriaModal({
+  open,
+  onClose,
+  instructorName,
+  criteriaScores = {},
+  setCriteriaScores,
+  onSubmit,
+  isSubmitting = false,
+  mode = 'edit',
+  evaluatorType = 'dept_head'
+}) {
+  const [error, setError] = React.useState('');
+  const [isEditMode, setIsEditMode] = React.useState(mode === 'edit');
+  const [criteria, setCriteria] = React.useState([]);
+  const [language, setLanguage] = React.useState('en');
+
+  React.useEffect(() => {
+    if (!open) return;
+    criteriaApi.get(evaluatorType).then((rows) => {
+      setCriteria(Array.isArray(rows) ? rows : []);
+    }).catch(() => {});
+  }, [evaluatorType, open]);
+
+  if (!open) return null;
+
+  const handleScoreChange = (criteriaId, score) => {
+    setCriteriaScores(prev => ({
+      ...prev,
+      [criteriaId]: score
+    }));
+    setError('');
+  };
+
+  const calculateAverageScore = () => {
+    const scores = Object.values(criteriaScores);
+    if (scores.length === 0) return 0;
+    return (scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(2);
+  };
+
+  const calculateTotalScore = () => {
+    // Convert average (1-5 scale) to percentage (0-100)
+    const avgScore = calculateAverageScore();
+    return Math.round((avgScore / 5) * 100);
+  };
+
+  const allCriteriaScored = () => {
+    return Object.keys(criteriaScores).length === criteria.length;
+  };
+
+  const handleSubmit = () => {
+    if (!allCriteriaScored()) {
+      setError('Please score all 20 criteria before submitting.');
+      return;
+    }
+    const totalScore = calculateTotalScore();
+    onSubmit(criteriaScores, totalScore);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto bg-black/40">
+      <div className="relative w-full max-w-4xl rounded-2xl bg-white p-6 shadow-2xl my-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {isEditMode ? 'Instructor Evaluation' : 'View Evaluation'}
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">{instructorName}</p>
+            {!isEditMode && (
+              <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                View Mode
+              </span>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <span className="text-2xl">✕</span>
+          </button>
+          <LanguageToggle language={language} onChange={setLanguage} />
+        </div>
+
+        {/* Instructions */}
+        <div className="mb-6 p-4 rounded-xl bg-blue-50 border border-blue-200">
+          <p className="text-sm text-blue-900">
+            {isEditMode ? (
+              <>
+                <strong>Instructions:</strong> Please evaluate the instructor on all 20 criteria using the 5-point scale (1=Poor to 5=Excellent). Each criterion contributes equally to the final evaluation score.
+              </>
+            ) : (
+              <>
+                <strong>View Mode:</strong> Below is the summary of the evaluation submitted for this instructor. Click "Edit Evaluation" to make changes.
+              </>
+            )}
+          </p>
+        </div>
+
+        {/* Criteria Categories */}
+        <div className="space-y-6 mb-6 max-h-96 overflow-y-auto pr-2">
+          {groupCriteriaByCategory(criteria).map((categoryObj) => (
+            <div key={categoryObj.category}>
+              {/* Category Header */}
+              <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wider mb-3 pl-1">
+                {categoryObj.category}
+              </h3>
+
+              {/* Criteria Items */}
+              <div className="space-y-3">
+                {categoryObj.criteria.map((criterion, criterionIndex) => {
+                  const currentScore = criteriaScores[criterion.id];
+                  return (
+                    <div
+                      key={criterion.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-gray-50/70 hover:bg-gray-100/50 rounded-2xl border border-gray-100 transition-all"
+                    >
+                      {/* Criterion Text */}
+                      <p className="text-sm font-medium text-gray-700 flex-1 pr-4">
+                        <span className="text-gray-400 mr-3 font-mono font-bold">{criterionIndex + 1}.</span>
+                        {getQuestionText(criterion, language)}
+                      </p>
+
+                      {/* Circular Rating Buttons 1-5 */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {RATING_SCALE.map((rating) => (
+                          <button
+                            key={rating}
+                            type="button"
+                            onClick={() => isEditMode && handleScoreChange(criterion.id, rating)}
+                            disabled={!isEditMode}
+                            className={`w-9 h-9 rounded-full text-sm font-semibold transition-all duration-150 flex items-center justify-center ${
+                              currentScore === rating
+                                ? "bg-blue-600 text-white shadow-md shadow-blue-200 scale-105 ring-2 ring-blue-300"
+                                : "bg-white text-gray-600 border border-gray-200 hover:border-blue-400 hover:text-blue-600"
+                            } ${!isEditMode ? "cursor-default" : "cursor-pointer"}`}
+                          >
+                            {rating}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Score Summary */}
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3">
+          <div className="p-4 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
+            <p className="text-xs text-gray-600 uppercase font-semibold">Criteria Scored</p>
+            <p className="text-2xl font-bold text-ieps-blue-600">{Object.keys(criteriaScores).length}/20</p>
+          </div>
+          <div className="p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200">
+            <p className="text-xs text-gray-600 uppercase font-semibold">Average (5-point scale)</p>
+            <p className="text-2xl font-bold text-purple-600">{calculateAverageScore()}</p>
+          </div>
+          <div className="p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
+            <p className="text-xs text-gray-600 uppercase font-semibold">Final Score (0-100)</p>
+            <p className="text-2xl font-bold text-green-600">{calculateTotalScore()}</p>
+          </div>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200">
+            <p className="text-sm text-red-800">{error}</p>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="px-6 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            {isEditMode ? 'Cancel' : 'Close'}
+          </button>
+          {!isEditMode && (
+            <button
+              type="button"
+              onClick={() => setIsEditMode(true)}
+              className="px-6 py-2 rounded-lg bg-gray-600 text-white font-semibold hover:bg-gray-700 transition-colors"
+            >
+              Edit Evaluation
+            </button>
+          )}
+          {isEditMode && (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting || !allCriteriaScored()}
+              className="px-6 py-2 rounded-lg bg-ieps-blue-600 text-white font-semibold hover:bg-ieps-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Evaluation'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

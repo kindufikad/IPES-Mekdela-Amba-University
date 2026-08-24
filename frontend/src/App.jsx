@@ -1,0 +1,92 @@
+import { Route, Routes } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import ProtectedRoute from './components/ProtectedRoute';
+import DashboardLayout from './components/DashboardLayout';
+import PublicLayout from './layouts/PublicLayout';
+import Home from './pages/Home';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Login from './pages/Login';
+import StudentDashboard from './pages/StudentDashboard';
+import InstructorDashboard from './pages/InstructorDashboard';
+import DeptHeadDashboard from './pages/DeptHeadDashboard';
+import SystemAdminDashboard from './pages/SystemAdminDashboard';
+import ChangePassword from './pages/ChangePassword';
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
+import CollegeDeanDashboard from './pages/CollegeDeanDashboard';
+import DirectorateDashboard from './pages/DirectorateDashboard';
+import Unauthorized from './pages/Unauthorized';
+import { LanguageProvider } from './context/LanguageContext';
+import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import './App.css';
+
+function App() {
+  return (
+    <LanguageProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <div className="min-h-screen flex flex-col bg-white dark:bg-black text-black dark:text-white">
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#22c55e',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
+      <main className="flex-grow">
+        <Routes>
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/login" element={<Login />} />
+          </Route>
+          <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/student-dashboard" element={<ProtectedRoute allowedRoles={['student']}><DashboardLayout role="student"><StudentDashboard /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/instructor-dashboard" element={<ProtectedRoute allowedRoles={['instructor']}><DashboardLayout role="instructor"><InstructorDashboard /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['systemadmin']}><DashboardLayout role="systemadmin"><SystemAdminDashboard /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['systemadmin']}><DashboardLayout role="systemadmin"><SystemAdminDashboard /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/dept-head/dashboard" element={<ProtectedRoute allowedRoles={['depthead']}><DashboardLayout role="depthead"><DeptHeadDashboard /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/depthead-dashboard" element={<ProtectedRoute allowedRoles={['depthead']}><DashboardLayout role="depthead"><DeptHeadDashboard /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/dept-head-dashboard" element={<ProtectedRoute allowedRoles={['depthead']}><DashboardLayout role="depthead"><DeptHeadDashboard /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/system-admin-dashboard" element={<ProtectedRoute allowedRoles={['systemadmin']}><DashboardLayout role="systemadmin"><SystemAdminDashboard /></DashboardLayout></ProtectedRoute>} />
+          <Route element={<ProtectedRoute allowedRoles={['college_dean', 'dean']}><DashboardLayout role="college_dean" title="College Dean Dashboard" subtitle="College performance, approvals, and announcements." /></ProtectedRoute>}>
+            <Route path="/dean/dashboard" element={<CollegeDeanDashboard />} />
+            <Route path="/dean-dashboard" element={<CollegeDeanDashboard />} />
+          </Route>
+          <Route element={<ProtectedRoute allowedRoles={['academic_directorate', 'academic_director', 'directorate']}><DashboardLayout role="academic_directorate" title="Academic Directorate Dashboard" subtitle="University-wide evaluation oversight and cycle control." /></ProtectedRoute>}>
+            <Route path="/directorate/dashboard" element={<DirectorateDashboard />} />
+            <Route path="/directorate-dashboard" element={<DirectorateDashboard />} />
+          </Route>
+        </Routes>
+      </main>
+    </div>
+        </ThemeProvider>
+      </AuthProvider>
+    </LanguageProvider>
+  );
+}
+
+export default App;
