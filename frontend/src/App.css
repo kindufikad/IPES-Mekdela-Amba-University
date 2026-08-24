@@ -48,4 +48,52 @@
   .no-print {
     display: none !important;
   }
+
+  .printing-official-report #root > div > *:not(.official-report-shell) {
+    display: none !important;
+  }
+
+  .printing-official-report .official-report-shell {
+    display: block !important;
+  }
+}
+
+.official-report-shell {
+  display: none;
+}
+
+.official-report {
+  max-width: 8.27in;
+  margin: 0 auto;
+  padding: 0.45in 0.55in;
+  color: #111827;
+  background: #fff;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 11pt;
+  line-height: 1.5;
+}
+
+.official-report__header { display: grid; grid-template-columns: 0.8in 1fr 2.1in; align-items: center; gap: 0.18in; }
+.official-report__brand-mark { display: flex; width: 0.68in; height: 0.68in; align-items: center; justify-content: center; border: 2px solid #111827; border-radius: 50%; font-family: Arial, sans-serif; font-size: 13pt; font-weight: 700; }
+.official-report h1 { margin: 0; font-size: 16pt; text-transform: uppercase; }
+.official-report__header p { margin: 0; }
+.official-report__amharic { text-align: right; font-size: 9pt; }
+.official-report__rule { margin: 0.12in 0 0.08in; border-top: 2px solid #111827; border-bottom: 1px solid #111827; height: 4px; }
+.official-report__meta { display: flex; justify-content: flex-end; gap: 0.35in; font-size: 10pt; }
+.official-report__recipient { margin-top: 0.25in; font-weight: 700; }
+.official-report h2 { margin: 0.18in 0 0.1in; font-size: 12pt; text-decoration: underline; }
+.official-report p { margin: 0.1in 0; }
+.official-report__table { width: 100%; margin: 0.2in 0; border-collapse: collapse; font-size: 8.5pt; }
+.official-report__table th, .official-report__table td { border: 1px solid #4b5563; padding: 5px 4px; text-align: left; }
+.official-report__table th { background: #f3f4f6; text-align: center; }
+.official-report__table td:nth-child(1), .official-report__table td:nth-child(n+4) { text-align: center; }
+.official-report__total-label { text-align: right !important; font-weight: 700; }
+.official-report__summary { border-top: 1px solid #9ca3af; border-bottom: 1px solid #9ca3af; padding: 0.1in 0; }
+.official-report__signature { display: flex; justify-content: space-between; margin-top: 0.35in; }
+.official-report__stamp { display: flex; width: 1.15in; height: 1.15in; align-items: center; justify-content: center; border: 2px solid #6b7280; border-radius: 50%; color: #6b7280; font-size: 8pt; text-align: center; }
+.official-report__cc { margin-top: 0.35in; font-size: 9.5pt; }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  .official-report-shell { display: block; }
 }

@@ -26,6 +26,7 @@ import EvaluationBreakdownModal from '../components/EvaluationBreakdownModal';
 import CourseAssignmentModal from '../components/CourseAssignmentModal';
 import DeptHeadPerformanceDashboard from '../components/DeptHeadPerformanceDashboard';
 import PublishEvaluation from './PublishEvaluation';
+import OfficialDepartmentReport from '../components/OfficialDepartmentReport';
 import { dispatchForm, SUBMISSIONS_UPDATED_EVENT } from '../services/formSubmissions';
 
 const STUDENT_EVAL_TEMPLATE_KEY = 'ipesStudentEvalTemplate';
@@ -109,6 +110,7 @@ const DeptHeadDashboard = () => {
   const [courseForm, setCourseForm] = useState({ name: '', code: '', yearLevel: '', semester: '', creditHours: '' });
   const [reportAcademicYear, setReportAcademicYear] = useState('2025/2026');
   const [reportSemester, setReportSemester] = useState('Semester II');
+  const [officialReportRow, setOfficialReportRow] = useState(null);
   const [courseCsvFile, setCourseCsvFile] = useState(null);
   const [courseCsvUploading, setCourseCsvUploading] = useState(false);
 
@@ -596,6 +598,15 @@ const DeptHeadDashboard = () => {
     const lowest = departmentReportRows.filter((row) => row.finalScore > 0).reduce((worst, row) => !worst || row.finalScore < worst.finalScore ? row : worst, null);
     return { total, completed, pending: total - completed, average, highest, lowest };
   }, [departmentReportRows]);
+
+  const printOfficialReport = (row = departmentReportRows[0]) => {
+    setOfficialReportRow(row || null);
+    document.body.classList.add('printing-official-report');
+    window.setTimeout(() => {
+      window.print();
+      window.setTimeout(() => document.body.classList.remove('printing-official-report'), 100);
+    }, 0);
+  };
 
   const urgentReminders = useMemo(() => {
     const reminders = [];
@@ -1520,7 +1531,7 @@ const DeptHeadDashboard = () => {
                 <p className="mt-1 text-sm text-gray-500">Overview of instructor evaluation results and performance in your department.</p>
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={() => window.print()} className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">🖨️ Print Report</button>
+                <button type="button" onClick={printOfficialReport} className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">🖨️ Print Official Report</button>
                 <button type="button" onClick={() => window.print()} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">📥 Export to PDF</button>
               </div>
             </div>
@@ -1566,7 +1577,7 @@ const DeptHeadDashboard = () => {
                   <tbody className="divide-y divide-gray-100">
                     {departmentReportRows.length ? departmentReportRows.map((row, index) => {
                       const level = row.finalScore >= 90 ? ['Excellent', 'bg-emerald-100 text-emerald-700'] : row.finalScore >= 80 ? ['Very Good', 'bg-blue-100 text-blue-700'] : row.finalScore >= 75 ? ['Good', 'bg-yellow-100 text-yellow-700'] : ['Average', 'bg-orange-100 text-orange-700'];
-                      return <tr key={row.id} className="hover:bg-gray-50"><td className="px-4 py-4">{index + 1}</td><td className="px-4 py-4 font-medium text-gray-900">{row.instructorName}</td><td className="px-4 py-4 text-gray-600">{row.employeeId}</td><td className="px-4 py-4">{row.studentScore.toFixed(2)}</td><td className="px-4 py-4">{row.peerScore.toFixed(2)}</td><td className="px-4 py-4">{row.deptHeadScore.toFixed(2)}</td><td className="px-4 py-4 font-bold text-blue-700">{row.finalScore.toFixed(2)}</td><td className="px-4 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${level[1]}`}>{level[0]}</span></td><td className="px-4 py-4"><span className={`text-xs font-semibold ${row.status === 'Completed' ? 'text-emerald-600' : 'text-orange-600'}`}>{row.status === 'Completed' ? '✓ Completed' : '◷ Pending'}</span></td><td className="px-4 py-4"><button type="button" title="Download individual slip" onClick={() => window.print()} className="rounded-lg px-2 py-1 text-lg text-gray-500 hover:bg-gray-100">⋮</button></td></tr>;
+                      return <tr key={row.id} className="hover:bg-gray-50"><td className="px-4 py-4">{index + 1}</td><td className="px-4 py-4 font-medium text-gray-900">{row.instructorName}</td><td className="px-4 py-4 text-gray-600">{row.employeeId}</td><td className="px-4 py-4">{row.studentScore.toFixed(2)}</td><td className="px-4 py-4">{row.peerScore.toFixed(2)}</td><td className="px-4 py-4">{row.deptHeadScore.toFixed(2)}</td><td className="px-4 py-4 font-bold text-blue-700">{row.finalScore.toFixed(2)}</td><td className="px-4 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${level[1]}`}>{level[0]}</span></td><td className="px-4 py-4"><span className={`text-xs font-semibold ${row.status === 'Completed' ? 'text-emerald-600' : 'text-orange-600'}`}>{row.status === 'Completed' ? '✓ Completed' : '◷ Pending'}</span></td><td className="px-4 py-4"><button type="button" title={`Print report for ${row.instructorName}`} onClick={() => printOfficialReport(row)} className="rounded-lg px-2 py-1 text-lg text-gray-500 hover:bg-gray-100">🖨️</button></td></tr>;
                     }) : <tr><td colSpan={10} className="px-4 py-10 text-center text-gray-500">No instructor evaluation results available.</td></tr>}
                   </tbody>
                 </table>
@@ -1586,6 +1597,15 @@ const DeptHeadDashboard = () => {
 
   return (
     <div className="container-custom py-8">
+      <div className="official-report-shell">
+        <OfficialDepartmentReport
+          departmentName={currentUser?.department_name || currentUser?.department || departmentId}
+          academicYear={reportAcademicYear}
+          semester={reportSemester}
+          reportRow={officialReportRow}
+          reportDate={new Date().toLocaleDateString()}
+        />
+      </div>
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center print:hidden">
         <div>
           <h1 className="text-3xl font-bold text-ieps-blue-600">{strings.deptHeadDashboard.title || 'Department Head Dashboard'}</h1>
