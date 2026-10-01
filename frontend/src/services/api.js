@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-const API_BASE_URL = '/api';
+import { API_URL } from '../../config';
 
 axios.interceptors.request.use((config) => {
   if (typeof window === 'undefined') return config;
@@ -63,7 +62,7 @@ const request = async (path, options = {}) => {
 
   try {
     const response = await axios({
-      url: `${API_BASE_URL}${path}`,
+      url: `${API_URL}${path}`,
       headers,
       withCredentials: true,
       ...axiosOptions,
