@@ -18,6 +18,8 @@ const ImageSlider = () => {
       image: campus,
       titleEn: 'Mekdela Amba University',
       titleAm: 'መቅደላ አምባ ዩኒቨርሲቲ',
+      subtitleEn: 'Instructor Performance Evaluation System',
+      subtitleAm: 'የመምህራን የሥራ አፈጻጸም ግምገማ ሥርዓት',
       alt: 'Mekdela Amba University campus',
     },
     {
@@ -25,6 +27,8 @@ const ImageSlider = () => {
       image: classroom,
       titleEn: 'Instructor Performance Evaluation System',
       titleAm: 'የመምህራን የሥራ አፈጻጸም ግምገማ ሥርዓት',
+      subtitleEn: 'Evaluate. Improve. Excel.',
+      subtitleAm: 'ገምግም፣ አሻሽል፣ ውጤታማ ሁን',
       alt: 'Modern classroom with dashboard',
     },
     {
@@ -32,6 +36,8 @@ const ImageSlider = () => {
       image: dashboard,
       titleEn: 'Evaluate. Improve. Excel.',
       titleAm: 'ገምግም፣ አሻሽል፣ ውጤታማ ሁን',
+      subtitleEn: 'Evidence-based performance insights for Mekdela Amba University.',
+      subtitleAm: 'ለመቅደላ አምባ ዩኒቨርሲቲ በማስረጃ የተደገፈ የአፈጻጸም ግንዛቤ።',
       alt: 'System statistics dashboard',
     },
   ];
@@ -78,22 +84,30 @@ const ImageSlider = () => {
           }`}
           aria-hidden={index !== currentSlide}
         >
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
-            style={{ backgroundImage: `url(${slide.image})` }}
+          <img
+            src={slide.image}
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = fallbackSlides[index].image;
+            }}
+            alt={slide.alt}
+            className="absolute inset-0 h-full w-full object-cover bg-gray-900 z-0"
           />
           <div className="absolute inset-0 z-10 bg-black/20" />
         </div>
       ))}
 
       <div className="absolute inset-0 z-20 flex items-center justify-center px-4 text-center">
-        <h2
-          className={`text-white text-3xl sm:text-4xl md:text-5xl font-bold leading-tight transition-all duration-500 ${
+        <div className={`max-w-3xl transition-all duration-500 ${
             fadeOut ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-          }`}
-        >
-          {language === 'en' ? slides[currentSlide].titleEn : slides[currentSlide].titleAm}
-        </h2>
+          }`}>
+          <h2 className="text-white text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
+            {language === 'en' ? slides[currentSlide].titleEn : slides[currentSlide].titleAm}
+          </h2>
+          <p className="mt-4 text-base font-medium text-white/90 sm:text-lg">
+            {language === 'en' ? slides[currentSlide].subtitleEn : slides[currentSlide].subtitleAm}
+          </p>
+        </div>
       </div>
 
       <div className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 gap-2">

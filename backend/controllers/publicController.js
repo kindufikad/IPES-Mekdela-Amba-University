@@ -71,6 +71,7 @@ const getSystemStats = async (req, res) => {
     const studentParticipation = totalStudents > 0
       ? Number(((participatingStudents / totalStudents) * 100).toFixed(2))
       : 0;
+    const hasData = evaluationCount > 0 || activeInstructorCount > 0 || departmentCount > 0 || totalStudents > 0;
 
     return res.json({
       success: true,
@@ -80,6 +81,8 @@ const getSystemStats = async (req, res) => {
         activeInstructors: activeInstructorCount,
         totalDepartments: departmentCount,
         studentParticipation,
+        hasData,
+        usingFallback: false,
       },
     });
   } catch (error) {
@@ -92,6 +95,8 @@ const getSystemStats = async (req, res) => {
         activeInstructors: 0,
         totalDepartments: 0,
         studentParticipation: 0,
+        hasData: false,
+        usingFallback: true,
       },
     });
   }

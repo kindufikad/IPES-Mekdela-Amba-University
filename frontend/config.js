@@ -1,6 +1,8 @@
 // Environment configuration
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+  || (import.meta.env.DEV ? 'http://localhost:5005' : 'https://ipes-backend.onrender.com');
 export const API_URL = import.meta.env.VITE_API_URL
-  || (import.meta.env.DEV ? '/api' : 'https://ipes-backend.onrender.com/api');
+  || (import.meta.env.DEV ? '/api' : `${BACKEND_URL}/api`);
 export const APP_NAME = 'Instructor Performance Evaluation System';
 export const UNIVERSITY_NAME = 'Mekdela Amba University';
 

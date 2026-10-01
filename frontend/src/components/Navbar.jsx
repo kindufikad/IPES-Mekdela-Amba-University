@@ -10,7 +10,7 @@ import { LanguageContext } from '../context/LanguageContext';
 import { useAuth } from '../context/useAuth';
 import toast from 'react-hot-toast';
 import NotificationBell from './NotificationBell';
-import useLandingContent from '../hooks/useLandingContent';
+import mauLogo from '../assets/mau.jpg';
 
 const Navbar = () => {
   const { strings } = useContext(LanguageContext);
@@ -18,7 +18,6 @@ const Navbar = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const landingContent = useLandingContent();
 
   const isDashboardPath = ['/student-dashboard', '/instructor-dashboard', '/depthead-dashboard', '/admin-dashboard', '/system-admin-dashboard'].includes(location.pathname);
   const hidePublicNav = isDashboardPath || role === 'depthead';
@@ -57,7 +56,14 @@ const Navbar = () => {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 md:gap-3 group min-w-0">
-            <img src={landingContent.system_logo} alt="IPES system logo" className="h-10 w-10 rounded-lg object-contain" />
+            <img
+              src={mauLogo}
+              alt="IPES system logo"
+              onError={(event) => {
+                event.currentTarget.style.display = 'none';
+              }}
+              className="h-10 w-10 rounded-lg object-contain"
+            />
             <div className="min-w-0">
               <span className="text-white font-bold text-base md:text-lg tracking-wide block">(IPES)</span>
               <p className="text-white/80 text-[11px] sm:text-xs md:text-sm leading-snug max-w-[220px]">

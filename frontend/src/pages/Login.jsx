@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/useAuth';
 import SuccessModal from '../components/SuccessModal';
 import useLandingContent from '../hooks/useLandingContent';
+import mauLogo from '../assets/mau.jpg';
 
 const Login = () => {
   const landingContent = useLandingContent();
@@ -372,7 +373,15 @@ const Login = () => {
         <div className="rounded-[28px] border border-gray-200 bg-white p-8 shadow-2xl shadow-ieps-blue-100/50 md:p-10">
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-ieps-blue-100 shadow-inner shadow-ieps-blue-200/40">
-              <img src={landingContent.university_logo} alt="Mekdela Amba University logo" className="h-14 w-14 object-contain" />
+              <img
+                src={landingContent.university_logo || mauLogo}
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = mauLogo;
+                }}
+                alt="Mekdela Amba University logo"
+                className="h-14 w-14 object-contain"
+              />
             </div>
 
             {!forgotPasswordMode ? (

@@ -7,6 +7,8 @@
     "start": "node index.js",
     "dev": "nodemon --config nodemon.json index.js",
     "bot": "node services/telegramBot.js",
+    "import:schema": "node importSchema.js",
+    "import:aiven-dump": "node scripts/importAivenDump.js",
     "migrate": "node migrations/runMigrations.js",
     "seed:users": "node seeders/seedUsers.js",
     "seed:evaluations": "node seeders/seedEvaluationData.js",

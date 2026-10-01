@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const configuredHost = process.env.DB_HOST || 'localhost';
+const sslEnabled = String(process.env.DB_SSL || '').toLowerCase() === 'true';
 
 const pool = mysql.createPool({
   host: configuredHost === 'localhost' ? '127.0.0.1' : configuredHost,
@@ -16,6 +17,7 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   charset: 'utf8mb4',
+  ...(sslEnabled ? { ssl: { rejectUnauthorized: false } } : {}),
 });
 
 pool.getConnection()

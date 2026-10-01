@@ -1,4 +1,6 @@
 -- IPES Complete Database Schema & Initial Data
+SET FOREIGN_KEY_CHECKS = 0;
+
 CREATE DATABASE IF NOT EXISTS ipes_db
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
@@ -113,7 +115,7 @@ CREATE TABLE IF NOT EXISTS students (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 ALTER TABLE users
-  ADD COLUMN IF NOT EXISTS student_id VARCHAR(50) NULL,
+  ADD COLUMN student_id VARCHAR(64) NULL,
   ADD CONSTRAINT fk_users_students
   FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE;
 
@@ -194,6 +196,7 @@ CREATE TABLE IF NOT EXISTS dept_head_evaluations (
   evaluator_id INT UNSIGNED NOT NULL,
   instructor_id INT UNSIGNED NOT NULL,
   evaluatee_id INT UNSIGNED DEFAULT NULL,
+  department_id INT UNSIGNED DEFAULT NULL,
   target_role VARCHAR(32) NOT NULL DEFAULT 'instructor',
   academic_year VARCHAR(20) DEFAULT '2025/2026',
   semester VARCHAR(20) DEFAULT 'Semester II',
@@ -398,10 +401,6 @@ CREATE TABLE IF NOT EXISTS peer_evaluation_submissions (
   CONSTRAINT fk_peer_submission_evaluatee FOREIGN KEY (evaluatee_id) REFERENCES instructors(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-ALTER TABLE student_evaluation_submissions
-  ADD COLUMN IF NOT EXISTS submitted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  ADD COLUMN IF NOT EXISTS editable_until DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL 3 DAY);
-
 CREATE TABLE IF NOT EXISTS peer_evaluation_publications (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   department_id INT UNSIGNED NOT NULL,
@@ -432,6 +431,8 @@ CREATE TABLE IF NOT EXISTS student_evaluation_submissions (
   improvements TEXT DEFAULT NULL,
   responses JSON DEFAULT NULL,
   status VARCHAR(32) NOT NULL DEFAULT 'submitted',
+  submitted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  editable_until DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL 3 DAY),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_student_evaluation_submissions_dispatch FOREIGN KEY (dispatch_id) REFERENCES evaluation_dispatches(id) ON DELETE CASCADE,
   CONSTRAINT fk_student_evaluation_submissions_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE SET NULL
@@ -483,3 +484,5 @@ CREATE TABLE IF NOT EXISTS evaluation_submissions (
     CONSTRAINT fk_evaluations_target FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_evaluations_department FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+SET FOREIGN_KEY_CHECKS = 1;

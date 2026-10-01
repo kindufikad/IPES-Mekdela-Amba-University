@@ -745,7 +745,7 @@ const initializeSchema = async () => {
   if (!(await columnExists('departments', 'department_code'))) {
     await pool.query('ALTER TABLE departments ADD COLUMN department_code VARCHAR(20) NULL UNIQUE AFTER department_name');
   }
-  await pool.query('UPDATE departments SET department_name = COALESCE(NULLIF(department_name, ""), name), department_code = COALESCE(NULLIF(department_code, ""), code) WHERE department_name IS NULL OR department_code IS NULL');
+  await pool.query("UPDATE departments SET department_name = COALESCE(NULLIF(department_name, ''), name), department_code = COALESCE(NULLIF(department_code, ''), code) WHERE department_name IS NULL OR department_code IS NULL");
 
   // Users table stores authentication and account metadata; role profiles store identity fields.
     await pool.query(`CREATE TABLE IF NOT EXISTS users (
